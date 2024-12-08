@@ -34,12 +34,13 @@ performance ceiling may be and then switch to the GPU.
 
 ## Hardware Choices
 
-Giorgi's Desktop PC, bridges2.
+Jakeb's Desktop PC, Giorgi's Desktop PC, bridges2.
 
 ## Software Stack
 
 - g++
 - OpenBLAS - https://github.com/OpenMathLib/OpenBLAS
+- CuBlas - https://developer.nvidia.com/cublas
 
 # Results
 
@@ -102,11 +103,17 @@ g++ openblas.cpp -o obl -lopenblas
 
 43.2692 ms
 
+## CuBlas with 4 GPUS on Bridges 2
+
+37.6527 ms
+
 # Takeaways
 
 ## OpenMP Makes Simple Parallelization very easy
 
 ## SIMD is cool!
+
+## GPUs are very efficient for Matrix Multiplication
 
 # Did we meet the goals set during prelim presentation?
 
