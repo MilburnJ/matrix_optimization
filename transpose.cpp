@@ -3,6 +3,29 @@
 #include <chrono>
 
 // Function to multiply two matrices
+// std::vector<std::vector<int>> multiplyMatricesOld(
+//     const std::vector<std::vector<int>> &A,
+//     const std::vector<std::vector<int>> &B) {
+
+//     int rowsA = A.size();
+//     int colsA = A[0].size();
+//     int colsB = B[0].size();
+
+//     // Initialize result matrix with zeros
+//     std::vector<std::vector<int>> C(rowsA, std::vector<int>(colsB, 0));
+
+//     // Naive multiplication (triple nested loop)
+// #pragma omp parallel for
+//     for (int i = 0; i < rowsA; ++i) {
+//         for (int j = 0; j < colsB; ++j) {
+//             for (int k = 0; k < colsA; ++k) {
+//                 C[i][j] += A[i][k] * B[k][j];
+//             }
+//         }
+//     }
+//     return C;
+// }
+
 std::vector<std::vector<int>> multiplyMatrices(
     const std::vector<std::vector<int>> &A,
     const std::vector<std::vector<int>> &B) {
@@ -10,6 +33,14 @@ std::vector<std::vector<int>> multiplyMatrices(
     int rowsA = A.size();
     int colsA = A[0].size();
     int colsB = B[0].size();
+
+    // Transpose matrix B
+    std::vector<std::vector<int>> BT(colsB, std::vector<int>(rowsA));
+    for (int i = 0; i < colsB; ++i) {
+        for (int j = 0; j < rowsA; ++j) {
+            BT[i][j] = B[j][i];
+        }
+    }
 
     // Initialize result matrix with zeros
     std::vector<std::vector<int>> C(rowsA, std::vector<int>(colsB, 0));
@@ -19,7 +50,7 @@ std::vector<std::vector<int>> multiplyMatrices(
     for (int i = 0; i < rowsA; ++i) {
         for (int j = 0; j < colsB; ++j) {
             for (int k = 0; k < colsA; ++k) {
-                C[i][j] += A[i][k] * B[k][j];
+                C[i][j] += A[i][k] * BT[j][k];
             }
         }
     }
