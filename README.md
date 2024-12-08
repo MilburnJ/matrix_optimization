@@ -107,6 +107,26 @@ g++ openblas.cpp -o obl -lopenblas
 
 37.6527 ms
 
+
+## CuBlas with 4 GPUs on Bridges 2 (Reducing Memory transfers from GPU to host)
+
+29.4177 ms
+
+## CuBlas with 4 GPUs on Bridges 2 (Reduced Memory transfer/Tensor Cores)
+
+31.3216 ms
+
+## Result for 10000 x 10000 Matrices
+
+## CuBlas with 4 GPUs on Bridges 2 (Reducing Memory transfers from GPU to host)
+
+2.33415 seconds
+
+## CuBlas with 4 GPUs on Bridges 2 (Reduced Memory transfer/Tensor Cores)
+
+1.16473 seconds
+
+
 # Takeaways
 
 ## OpenMP Makes Simple Parallelization very easy
@@ -114,6 +134,12 @@ g++ openblas.cpp -o obl -lopenblas
 ## SIMD is cool!
 
 ## GPUs are very efficient for Matrix Multiplication
+
+## Memory overhead can have significant impact on performance
+
+## Tensor cores may not result in significant performance increase if operation is too small (large overhead)
+
+## However they are significantly faster when operations are large
 
 # Did we meet the goals set during prelim presentation?
 
