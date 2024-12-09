@@ -116,6 +116,10 @@ g++ openblas.cpp -o obl -lopenblas
 
 31.3216 ms
 
+## CuBlas with 4 GPUs on Bridges 2 (Reducing Memory transfers from GPU to host) (Change FP64 to FP32)
+
+27.3187 ms (Best Result)
+
 ## Result for 10000 x 10000 Matrices
 
 ## CuBlas with 4 GPUs on Bridges 2 (Reducing Memory transfers from GPU to host)
