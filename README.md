@@ -37,6 +37,90 @@ for (int i = 0; i < rowsA; ++i) {
 }
 ```
 
+## Enter the GPUs:
+
+Switching to GPUs was a game-changer. Using NVIDIA’s CuBLAS library on Bridges-2 (a high-performance computing (HPC) platform), equipped with 4 powerful GPUs per node, we unlocked new speed. Our iterative optimizations included:
+
+Using CuBLAS with 4 GPUs:
+By simply using the CuBLAS library with 4 GPUs, we achieved an initial runtime of 37.653 ms. This provided a strong starting point for further optimizations.
+
+```cpp
+    // Create cuBLAS handle
+    cublasHandle_t handle;
+    CUBLAS_CHECK(cublasCreate(&handle));
+
+    // Perform first matrix multiplication: d_intermediate = d_A * d_B
+    double alpha = 1.0;
+    double beta = 0.0;
+    CUBLAS_CHECK(cublasDgemm(
+        handle,
+        CUBLAS_OP_N, CUBLAS_OP_N,
+        n, n, n,
+        &alpha,
+        d_A, n,
+        d_B, n,
+        &beta,
+        d_intermediate, n
+    ));
+
+    // Perform second matrix multiplication: d_C = d_intermediate * d_B
+    CUBLAS_CHECK(cublasDgemm(
+        handle,
+        CUBLAS_OP_N, CUBLAS_OP_N,
+        n, n, n,
+        &alpha,
+        d_intermediate, n,
+        d_B, n,
+        &beta,
+        d_C, n
+    ));
+```
+
+Reducing Memory Transfers:
+Memory transfer between the GPU and the host (CPU) can be a bottleneck. By minimizing these transfers, we dropped the runtime to 29.417 ms.
+
+```cpp
+    // Copy matrices A and B to the device (Store intermediate result on the GPU)
+    CUDA_CHECK(cudaMemcpy(d_A, A.data(), n * n * sizeof(double), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_B, B.data(), n * n * sizeof(double), cudaMemcpyHostToDevice));
+```
+
+Utilizing Tensor Cores:
+Tensor cores are specialized hardware on NVIDIA GPUs designed for matrix operations. While not as impactful for smaller matrices, they showed their true power when working with larger datasets.
+
+```cpp
+    // Enable Tensor Core acceleration
+    CUBLAS_CHECK(cublasSetMathMode(handle, CUBLAS_TENSOR_OP_MATH));
+
+    // Perform first matrix multiplication: d_intermediate = d_A * d_B
+    half alpha = __float2half(1.0f);
+    half beta = __float2half(0.0f);
+    CUBLAS_CHECK(cublasGemmEx(
+        handle,
+        CUBLAS_OP_N, CUBLAS_OP_N, // No transpose for A and B
+        n, n, n,                 // Matrix dimensions
+        &alpha,
+        d_A, CUDA_R_16F, n,
+        d_B, CUDA_R_16F, n,
+        &beta,
+        d_intermediate, CUDA_R_16F, n,
+        CUDA_R_32F, // Compute in FP32
+        CUBLAS_GEMM_DEFAULT_TENSOR_OP
+    ));
+
+```
+
+Switching Precision:
+Moving from FP64 (double precision) to FP32 (single precision) significantly reduced computational overhead. This final tweak achieved our best runtime of 27.318 ms for multiplying three 1000x1000 matrices.
+
+```cpp
+    // Allocate and initialize host memory
+    // Change Double -> Float
+    std::vector<float> A(n * n, 1.0); // Matrix A
+    std::vector<float> B(n * n, 1.0); // Matrix B
+    std::vector<float> C(n * n, 0.0); // Result matrix
+```
+
 ## Summary of Results
 
 ### CPU
