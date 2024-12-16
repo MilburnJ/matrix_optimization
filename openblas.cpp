@@ -67,17 +67,17 @@ std::vector<std::vector<double>> multiplyMatrices(
         CblasRowMajor,  // Row-major storage
         CblasNoTrans,   // No transpose for A
         CblasNoTrans,   // No transpose for B
-        rowsA,              // Number of rows in A and C
-        colsB,              // Number of columns in B and C
-        colsA,              // Number of columns in A and rows in B
+        rowsA,          // Number of rows in A and C
+        colsB,          // Number of columns in B and C
+        colsA,          // Number of columns in A and rows in B
         alpha,          // Scalar alpha
-        A_flat.data(),              // Matrix A
-        rowsA,            // Leading dimension of A
-        B_flat.data(),              // Matrix B
-        rowsB,            // Leading dimension of B
+        A_flat.data(),  // Matrix A
+        rowsA,          // Leading dimension of A
+        B_flat.data(),  // Matrix B
+        rowsB,          // Leading dimension of B
         beta,           // Scalar beta
-        C_flat.data(),              // Result matrix C
-        rowsA             // Leading dimension of C
+        C_flat.data(),  // Result matrix C
+        rowsA           // Leading dimension of C
     );
 
 

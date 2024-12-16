@@ -24,8 +24,12 @@ By doing this, we hoped to learn more about:
 
 *To see a summary of results, scroll down until the end.*
 
-We started with a naive multiplication algorithm that used a triple
-for loop:
+For this project we used Fangjun Zhou’s
+[video](https://www.youtube.com/watch?v=QGYvbsHDPxo)
+([source](https://github.com/fangjunzhou/blas-playground)) as
+guidance, though we optimized a slightly different algorithm. We
+started with a naive multiplication algorithm for two matrices that
+used a triple for loop:
 
 ```cpp
 for (int i = 0; i < rowsA; ++i) {
@@ -36,6 +40,95 @@ for (int i = 0; i < rowsA; ++i) {
     }
 }
 ```
+
+This algorithm was the slowest and least efficient. One of the
+quickest ways to get better performance was to parallelize it using
+OpenMP, so that's what we did:
+
+```cpp
+#pragma omp parallel for
+    for (int i = 0; i < rowsA; ++i) {
+        for (int j = 0; j < colsB; ++j) {
+            for (int k = 0; k < colsA; ++k) {
+                C[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+```
+
+This dramatically reduced the execution time. It was very surprising
+to us that most of the inefficiency in the naive algorithm was
+removable with such ease. However, the result was still far from our
+goals, so next we tried an interesting optimization: transposing the
+second matrix.
+
+```cpp
+// Transpose matrix B
+std::vector<std::vector<int>> BT(colsB, std::vector<int>(rowsA));
+for (int i = 0; i < colsB; ++i) {
+    for (int j = 0; j < rowsA; ++j) {
+        BT[i][j] = B[j][i];
+    }
+}
+
+// The rest of the code is the same as the example above.
+```
+
+As we've learned, transposing the second matrix improves temporal
+locality by changing the data access pattern. By doing so, entries
+that are in the cache are useful for a longer time. This has given us
+a marginal improvement at this point.
+
+Next we tried to leverage GCC's built-in optimizations by compiling the
+existing code with `-O3`. This gave us another dramatic (~10x) decrease
+in execution time. Looking at the list of optimizations using the
+`-fopt-info` flag, we saw that most of the optimizations performed
+were:
+
+- Inlining
+- Vectorization
+- Loop unrolling
+
+However, using the option `f-opt-info-missed` showed us that there's
+still room to grow in terms of compiler optimizations.
+
+Next we combined `-O3` with matrix transposition and this time we got
+a ~2x speedup again. It seems that we were able to remove other
+factors of inefficiency with `-O3` which let the cache optimizations
+shine through.
+
+Finally, we tried outsourcing matrix multiplication to the OpenBLAS
+library. Since we used nested `std::vector` instances to store our
+data and `cblas_dgemm` --- our matrix multiplication function ---
+required pointers to 1D arrays, we had to take a performance hit and
+transform the 2D structures down into 1D. Then, our code for invoking
+the multiplication function looked like this:
+
+```cpp
+cblas_dgemm(
+    CblasRowMajor,  // Row-major storage
+    CblasNoTrans,   // No transpose for A
+    CblasNoTrans,   // No transpose for B
+    rowsA,          // Number of rows in A and C
+    colsB,          // Number of columns in B and C
+    colsA,          // Number of columns in A and rows in B
+    alpha,          // Scalar alpha
+    A_flat.data(),  // Matrix A
+    rowsA,          // Leading dimension of A
+    B_flat.data(),  // Matrix B
+    rowsB,          // Leading dimension of B
+    beta,           // Scalar beta
+    C_flat.data(),  // Result matrix C
+    rowsA           // Leading dimension of C
+);
+```
+
+Where `A_flat`, `B_flat`, and `C_flat` are flattened vectors
+containing our data.
+
+Despite the data transformation overhead, we still saw a 2x
+improvement, which was further enhanced with using `-O3`, leading us
+to the final result of 43.2692 ms.
 
 ## Enter the GPUs:
 
@@ -111,7 +204,7 @@ Tensor cores are specialized hardware on NVIDIA GPUs designed for matrix operati
 ```
 
 Switching Precision:
-Moving from FP64 (double precision) to FP32 (single precision) significantly reduced computational overhead. This final tweak achieved our best runtime of 27.318 ms for multiplying three 1000x1000 matrices.
+Moving from FP64 (double precision) to FP32 (single precision) significantly reduced computational overhead. This final tweak achieved our best runtime of **27.318 ms** for multiplying three 1000x1000 matrices.
 
 ```cpp
     // Allocate and initialize host memory
