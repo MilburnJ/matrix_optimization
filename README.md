@@ -214,6 +214,9 @@ Moving from FP64 (double precision) to FP32 (single precision) significantly red
     std::vector<float> C(n * n, 0.0); // Result matrix
 ```
 
+## Takeaways
+In summary, our exploration of matrix multiplication optimization demonstrated the power of systematically improving performance across different layers of the hardware and software stack. Starting with a naive implementation, we saw how straightforward techniques like OpenMP parallelization and matrix transposition could significantly improve CPU performance by enhancing parallelism and cache efficiency. Compiler optimizations with -O3 further reduced execution times by applying advanced techniques like inlining and vectorization, but even these improvements had their limits on CPUs. Transitioning to GPUs on Bridges-2 brought a dramatic shift in performance, with CuBLAS providing an excellent starting point and additional optimizations—such as minimizing memory transfers, utilizing Tensor Cores, and switching precision to FP32—further reducing runtimes. This project underscored the critical importance of memory efficiency, hardware-specific optimizations, and leveraging accelerators like GPUs for parallel tasks. By carefully tuning each layer, we not only achieved our primary goal but also gained a deeper understanding of modern computer architecture and performance optimization.
+
 ## Summary of Results
 
 ### CPU
